@@ -1,6 +1,12 @@
 # ----------------------------------
 #          INSTALL & TEST
 # ----------------------------------
+first_npz:
+	@python autotab/TabDataReprGen.py
+
+run_first_model:
+	@python autotab/TabCNN.py
+
 install_requirements:
 	@pip install -r requirements.txt
 
