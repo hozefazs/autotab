@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 import os
+
 from tensorflow.keras.optimizers import Adadelta
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Reshape, Activation

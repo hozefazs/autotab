@@ -3,9 +3,6 @@
 .ipynb_checkpoints
 .DS_Store
 raw_data/
-*.csv
 **/__pycache__/
 .env
-*.wav
-*.jams
 *.saved
