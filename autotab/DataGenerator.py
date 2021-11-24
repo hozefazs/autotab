@@ -1,16 +1,27 @@
 import numpy as np
 import tensorflow.keras as keras
+from google.cloud import storage
+import os
+from io import BytesIO # for google cloud npz loading
+from tensorflow.python.lib.io import file_io  # for google cloud npz loading
+
+BUCKET_NAME = os.getenv('BUCKET_NAME')
+DATA_BUCKET_FOLDER = os.getenv('DATA_BUCKET_FOLDER')
+is_gcp = bool(os.getenv(
+    'GCP'))  # environment variable for whether google cloud is to beused
 
 
 class DataGenerator(keras.utils.Sequence):
-    def __init__(self,
-                 list_IDs,
-                 data_path="data/spec_repr/",
-                 batch_size=128,
-                 shuffle=True,
-                 label_dim=(6, 21),
-                 spec_repr="c",
-                 con_win_size=9):
+    def __init__(
+            self,
+            list_IDs,
+            data_path="/mnt/d/data-science/le-wagon/autotab/data/spec_repr/",
+            #data_path=f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/",
+            batch_size=128,
+            shuffle=True,
+            label_dim=(6, 21),
+            spec_repr="c",
+            con_win_size=9):
 
         self.list_IDs = list_IDs
         self.data_path = data_path
@@ -73,8 +84,15 @@ class DataGenerator(keras.utils.Sequence):
             filename = "_".join(ID.split("_")[:-1]) + ".npz"
             frame_idx = int(ID.split("_")[-1])
 
-            # load a context window centered around the frame index
-            loaded = np.load(data_dir + filename)
+            if not is_gcp:
+                # load a context window centered around the frame index
+                loaded = np.load(data_dir + filename)
+            else: # code to load an npz file from google cloud
+                f = BytesIO(
+                    file_io.read_file_to_string(data_dir + filename,
+                                                binary_mode=True))
+                loaded = np.load(f)
+
             full_x = np.pad(loaded["repr"], [(self.halfwin, self.halfwin),
                                              (0, 0)],
                             mode='constant')

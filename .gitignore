@@ -4,7 +4,6 @@
 .DS_Store
 raw_data/
 **/__pycache__/
-.env
 *.saved
 *.wav
 *.jams

@@ -3,6 +3,8 @@ pip>=9
 setuptools>=26
 twine
 wheel>=0.29
+python-dotenv
+google-cloud-storage
 
 # data science
 numpy
@@ -19,7 +21,6 @@ yapf
 
 # API #optional
 gcsfs
-google-cloud-storage
 mlflow
 s3fs
 

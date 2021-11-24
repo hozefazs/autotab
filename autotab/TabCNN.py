@@ -4,18 +4,24 @@
 
 from __future__ import print_function
 import os
-
+from os.path import join, dirname
+from autotab.DataGenerator import DataGenerator
 from tensorflow.keras.optimizers import Adadelta
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Reshape, Activation
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Conv1D, Lambda
 from tensorflow.keras import backend as K
 from tensorflow.python.keras.engine.sequential import clear_previously_created_nodes
-from DataGenerator import DataGenerator
 import pandas as pd
 import numpy as np
 import datetime
-from Metrics import *
+from autotab.Metrics import *
+from google.cloud import storage
+
+BUCKET_NAME = os.getenv('BUCKET_NAME')
+DATA_BUCKET_FOLDER = os.getenv('DATA_BUCKET_FOLDER')
+
+is_gcp = bool(os.getenv('GCP'))
 
 
 class TabCNN:
@@ -25,24 +31,37 @@ class TabCNN:
             epochs=8,
             con_win_size=9,
             spec_repr="c",
-            data_path="/mnt/d/data-science/le-wagon/tab-cnn/data/spec_repr/",
+            data_path="/mnt/d/data-science/le-wagon/autotab/data/spec_repr/",
+            #data_path=f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/",
             id_file="id.csv",
             save_path="saved/"):
-
+        #save_path=f"gs://{BUCKET_NAME}/saved/"):
         self.batch_size = batch_size
         self.epochs = epochs
         self.con_win_size = con_win_size
         self.spec_repr = spec_repr
+        if (is_gcp):
+            print("Using Google cloud buckets")
+            print(f"BUCKET_NAME {BUCKET_NAME}")
+            print(f"DATA_BUCKET_FOLDER {DATA_BUCKET_FOLDER}")
+            data_path = f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/"
         self.data_path = data_path
+        print(data_path)
         self.id_file = id_file
+        if is_gcp:
+            save_path = f"gs://{BUCKET_NAME}/saved/"
         self.save_path = save_path
 
         self.load_IDs()
 
         self.save_folder = self.save_path + self.spec_repr + " " + datetime.datetime.now(
         ).strftime("%Y-%m-%d %H:%M:%S") + "/"
-        if not os.path.exists(self.save_folder):
-            os.makedirs(self.save_folder)
+        if not is_gcp:
+            if not os.path.exists(self.save_folder):
+                os.makedirs(self.save_folder)
+        else:
+            self.check_gcp_save_folder()
+
         self.log_file = self.save_folder + "log.txt"
 
         self.metrics = {}
@@ -67,8 +86,11 @@ class TabCNN:
             self.input_shape = (1025, self.con_win_size, 1)
 
         # these probably won't ever change
-        self.num_classes = 21
-        self.num_strings = 6
+        self.num_classes = 21  # 21 frets of the guitar
+        self.num_strings = 6  # 6 strings on the guitar
+
+    def check_gcp_save_folder(self):
+        pass
 
     def load_IDs(self):
         csv_file = self.data_path + self.id_file
@@ -102,11 +124,22 @@ class TabCNN:
             con_win_size=self.con_win_size)
 
         self.split_folder = self.save_folder + str(self.data_split) + "/"
-        if not os.path.exists(self.split_folder):
-            os.makedirs(self.split_folder)
+        if not is_gcp:
+            if not os.path.exists(self.split_folder):
+                os.makedirs(self.split_folder)
+        else:
+            self.check_gcp_split_folder()
+
+    def check_gcp_split_folder(self):
+        pass
 
     def log_model(self):
-        with open(self.log_file, 'w') as fh:
+        if not is_gcp:
+            logFileName = self.log_file  #if not gcp use originla filename
+        else:
+            logFileName = 'tmp_log.txt'  # if gcp use a temp file
+
+        with open(logFileName, 'w') as fh:  # write to the file
             fh.write("\nbatch_size: " + str(self.batch_size))
             fh.write("\nepochs: " + str(self.epochs))
             fh.write("\nspec_repr: " + str(self.spec_repr))
@@ -114,6 +147,11 @@ class TabCNN:
             fh.write("\ncon_win_size: " + str(self.con_win_size))
             fh.write("\nid_file: " + str(self.id_file) + "\n")
             self.model.summary(print_fn=lambda x: fh.write(x + '\n'))
+
+        if is_gcp:  #gcp needs the file created locally to then upload
+            logBlob = storage.Client().bucket(BUCKET_NAME).blob(self.log_file)
+            logBlob.upload_from_filename(  # this is using the tmp file
+                logFileName)  #upload the local file made
 
     def softmax_by_string(self, t):
         sh = K.shape(t)
