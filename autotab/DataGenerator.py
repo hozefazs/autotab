@@ -2,20 +2,19 @@ import numpy as np
 import tensorflow.keras as keras
 from google.cloud import storage
 import os
-from io import BytesIO # for google cloud npz loading
-from tensorflow.python.lib.io import file_io  # for google cloud npz loading
+from io import BytesIO  # for google cloud npz loading
+from tensorflow.python.lib.io import file_io
 
-BUCKET_NAME = os.getenv('BUCKET_NAME')
-DATA_BUCKET_FOLDER = os.getenv('DATA_BUCKET_FOLDER')
-is_gcp = bool(os.getenv(
-    'GCP'))  # environment variable for whether google cloud is to beused
+from autotab.param import GCP  # for google cloud npz loading
+
+is_gcp = GCP  # environment variable for whether google cloud is to beused
 
 
 class DataGenerator(keras.utils.Sequence):
     def __init__(
             self,
             list_IDs,
-            data_path="/mnt/d/data-science/le-wagon/autotab/data/spec_repr/",
+            data_path="",
             #data_path=f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/",
             batch_size=128,
             shuffle=True,
@@ -87,7 +86,7 @@ class DataGenerator(keras.utils.Sequence):
             if not is_gcp:
                 # load a context window centered around the frame index
                 loaded = np.load(data_dir + filename)
-            else: # code to load an npz file from google cloud
+            else:  # code to load an npz file from google cloud
                 f = BytesIO(
                     file_io.read_file_to_string(data_dir + filename,
                                                 binary_mode=True))

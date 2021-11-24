@@ -18,10 +18,9 @@ import datetime
 from autotab.Metrics import *
 from google.cloud import storage
 
-BUCKET_NAME = os.getenv('BUCKET_NAME')
-DATA_BUCKET_FOLDER = os.getenv('DATA_BUCKET_FOLDER')
+from autotab.param import BUCKET_NAME, DATA_BUCKET_FOLDER, GCP
 
-is_gcp = bool(os.getenv('GCP'))
+is_gcp = GCP
 
 
 class TabCNN:
@@ -31,7 +30,7 @@ class TabCNN:
             epochs=8,
             con_win_size=9,
             spec_repr="c",
-            data_path="/mnt/d/data-science/le-wagon/autotab/data/spec_repr/",
+            data_path="",
             #data_path=f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/",
             id_file="id.csv",
             save_path="saved/"):
@@ -44,15 +43,18 @@ class TabCNN:
             print("Using Google cloud buckets")
             print(f"BUCKET_NAME {BUCKET_NAME}")
             print(f"DATA_BUCKET_FOLDER {DATA_BUCKET_FOLDER}")
-            data_path = f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/"
-        self.data_path = data_path
-        print(data_path)
+            self.data_path = f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/"
+        else:
+            self.data_path = data_path
+        print(self.data_path, flush=True)
         self.id_file = id_file
         if is_gcp:
-            save_path = f"gs://{BUCKET_NAME}/saved/"
-        self.save_path = save_path
+            self.save_path = f"gs://{BUCKET_NAME}/saved/"
+        else:
+            self.save_path = save_path
+        print(self.save_path, flush=True)
 
-        self.load_IDs()
+        self.load_IDs(self.data_path, self.id_file)
 
         self.save_folder = self.save_path + self.spec_repr + " " + datetime.datetime.now(
         ).strftime("%Y-%m-%d %H:%M:%S") + "/"
@@ -92,8 +94,9 @@ class TabCNN:
     def check_gcp_save_folder(self):
         pass
 
-    def load_IDs(self):
+    def load_IDs(self, data_path, id_file):
         csv_file = self.data_path + self.id_file
+        print(f'getting ids from {csv_file}', flush=True)
         self.list_IDs = list(pd.read_csv(csv_file, header=None)[0])
 
     def partition_data(self, data_split):
@@ -204,16 +207,34 @@ class TabCNN:
                                  workers=9)
 
     def save_weights(self):
-        self.model.save_weights(self.split_folder + "weights.h5")
+        if not is_gcp:
+            save_file_name = self.split_folder + "weights.h5"  #if not gcp use original filename
+        else:
+            save_file_name = 'tmp_save.h5'  # if gcp use a temp file
+        self.model.save_weights(save_file_name)
+
+        if is_gcp:  #gcp needs the file created locally to then upload
+            save_blob = storage.Client().bucket(BUCKET_NAME).blob(
+                self.split_folder + "weights.h5")
+            save_blob.upload_from_filename(  # this is using the tmp file
+                save_file_name)  #upload the local file made
 
     def test(self):
         self.X_test, self.y_gt = self.validation_generator[0]
         self.y_pred = self.model.predict(self.X_test)
 
     def save_predictions(self):
-        np.savez(self.split_folder + "predictions.npz",
-                 y_pred=self.y_pred,
-                 y_gt=self.y_gt)
+        if not is_gcp:
+            save_file_name = self.split_folder + "predictions.npz"  #if not gcp use original filename
+        else:
+            save_file_name = 'tmp_save.npz'  # if gcp use a temp file
+        np.savez(save_file_name, y_pred=self.y_pred, y_gt=self.y_gt)
+
+        if is_gcp:  #gcp needs the file created locally to then upload
+            save_blob = storage.Client().bucket(BUCKET_NAME).blob(
+                self.split_folder + "predictions.npz")
+            save_blob.upload_from_filename(  # this is using the tmp file
+                save_file_name)  #upload the local file made
 
     def evaluate(self):
         self.metrics["pp"].append(pitch_precision(self.y_pred, self.y_gt))
