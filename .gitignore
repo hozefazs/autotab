@@ -6,3 +6,6 @@ raw_data/
 **/__pycache__/
 .env
 *.saved
+*.wav
+*.jams
+*.npz
