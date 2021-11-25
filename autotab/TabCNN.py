@@ -1,6 +1,6 @@
-''' A CNN to classify 6 fret-string positions
+""" A CNN to classify 6 fret-string positions
     at the frame level during guitar performance
-'''
+"""
 
 from __future__ import print_function
 import os
@@ -20,26 +20,27 @@ from google.cloud import storage
 
 from autotab.param import BUCKET_NAME, DATA_BUCKET_FOLDER, GCP
 
-is_gcp = GCP
+is_gcp = GCP  # boolean to know whether to use GCP buckets
 
 
 class TabCNN:
     def __init__(
-            self,
-            batch_size=128,
-            epochs=8,
-            con_win_size=9,
-            spec_repr="c",
-            data_path="",
-            #data_path=f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/",
-            id_file="id.csv",
-            save_path="saved/"):
-        #save_path=f"gs://{BUCKET_NAME}/saved/"):
+        self,
+        batch_size=128,
+        epochs=8,
+        con_win_size=9,
+        spec_repr="c",
+        data_path="",
+        # data_path=f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/",
+        id_file="id.csv",
+        save_path="saved/",
+    ):
+        # save_path=f"gs://{BUCKET_NAME}/saved/"):
         self.batch_size = batch_size
         self.epochs = epochs
         self.con_win_size = con_win_size
         self.spec_repr = spec_repr
-        if (is_gcp):
+        if is_gcp:
             print("Using Google cloud buckets")
             print(f"BUCKET_NAME {BUCKET_NAME}")
             print(f"DATA_BUCKET_FOLDER {DATA_BUCKET_FOLDER}")
@@ -54,10 +55,11 @@ class TabCNN:
             self.save_path = save_path
         print(self.save_path, flush=True)
 
-        self.load_IDs(self.data_path, self.id_file)
+        self.load_IDs()
 
-        self.save_folder = self.save_path + self.spec_repr + " " + datetime.datetime.now(
-        ).strftime("%Y-%m-%d %H:%M:%S") + "/"
+        self.save_folder = (
+            self.save_path + self.spec_repr + " " +
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "/")
         if not is_gcp:
             if not os.path.exists(self.save_folder):
                 os.makedirs(self.save_folder)
@@ -94,12 +96,21 @@ class TabCNN:
     def check_gcp_save_folder(self):
         pass
 
-    def load_IDs(self, data_path, id_file):
+    def load_IDs(self):
+        """Loads the id.csv files with the name of the music files to fit/predict upon
+
+            Args:
+            data_path ([type]): [description]
+            id_file ([type]): [description]"""
         csv_file = self.data_path + self.id_file
-        print(f'getting ids from {csv_file}', flush=True)
+        print(f"getting ids from {csv_file}", flush=True)
         self.list_IDs = list(pd.read_csv(csv_file, header=None)[0])
 
     def partition_data(self, data_split):
+        """[summary]
+
+            Args:
+            data_split ([type]): [description]"""
         self.data_split = data_split
         self.partition = {}
         self.partition["training"] = []
@@ -111,20 +122,23 @@ class TabCNN:
             else:
                 self.partition["training"].append(ID)
 
-        self.training_generator = DataGenerator(self.partition['training'],
-                                                data_path=self.data_path,
-                                                batch_size=self.batch_size,
-                                                shuffle=True,
-                                                spec_repr=self.spec_repr,
-                                                con_win_size=self.con_win_size)
+        self.training_generator = DataGenerator(
+            self.partition["training"],
+            data_path=self.data_path,
+            batch_size=self.batch_size,
+            shuffle=True,
+            spec_repr=self.spec_repr,
+            con_win_size=self.con_win_size,
+        )
 
         self.validation_generator = DataGenerator(
-            self.partition['validation'],
+            self.partition["validation"],
             data_path=self.data_path,
-            batch_size=len(self.partition['validation']),
+            batch_size=len(self.partition["validation"]),
             shuffle=False,
             spec_repr=self.spec_repr,
-            con_win_size=self.con_win_size)
+            con_win_size=self.con_win_size,
+        )
 
         self.split_folder = self.save_folder + str(self.data_split) + "/"
         if not is_gcp:
@@ -138,23 +152,23 @@ class TabCNN:
 
     def log_model(self):
         if not is_gcp:
-            logFileName = self.log_file  #if not gcp use originla filename
+            logFileName = self.log_file  # if not gcp use originla filename
         else:
-            logFileName = 'tmp_log.txt'  # if gcp use a temp file
+            logFileName = "tmp_log.txt"  # if gcp use a temp file
 
-        with open(logFileName, 'w') as fh:  # write to the file
+        with open(logFileName, "w") as fh:  # write to the file
             fh.write("\nbatch_size: " + str(self.batch_size))
             fh.write("\nepochs: " + str(self.epochs))
             fh.write("\nspec_repr: " + str(self.spec_repr))
             fh.write("\ndata_path: " + str(self.data_path))
             fh.write("\ncon_win_size: " + str(self.con_win_size))
             fh.write("\nid_file: " + str(self.id_file) + "\n")
-            self.model.summary(print_fn=lambda x: fh.write(x + '\n'))
+            self.model.summary(print_fn=lambda x: fh.write(x + "\n"))
 
-        if is_gcp:  #gcp needs the file created locally to then upload
+        if is_gcp:  # gcp needs the file created locally to then upload
             logBlob = storage.Client().bucket(BUCKET_NAME).blob(self.log_file)
             logBlob.upload_from_filename(  # this is using the tmp file
-                logFileName)  #upload the local file made
+                logFileName)  # upload the local file made
 
     def softmax_by_string(self, t):
         sh = K.shape(t)
@@ -179,14 +193,14 @@ class TabCNN:
         model.add(
             Conv2D(32,
                    kernel_size=(3, 3),
-                   activation='relu',
+                   activation="relu",
                    input_shape=self.input_shape))
-        model.add(Conv2D(64, (3, 3), activation='relu'))
-        model.add(Conv2D(64, (3, 3), activation='relu'))
+        model.add(Conv2D(64, (3, 3), activation="relu"))
+        model.add(Conv2D(64, (3, 3), activation="relu"))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.25))
         model.add(Flatten())
-        model.add(Dense(128, activation='relu'))
+        model.add(Dense(128, activation="relu"))
         model.add(Dropout(0.5))
         model.add(Dense(self.num_classes * self.num_strings))  # no activation
         model.add(Reshape((self.num_strings, self.num_classes)))
@@ -199,25 +213,29 @@ class TabCNN:
         self.model = model
 
     def train(self):
-        self.model.fit_generator(generator=self.training_generator,
-                                 validation_data=None,
-                                 epochs=self.epochs,
-                                 verbose=1,
-                                 use_multiprocessing=True,
-                                 workers=9)
+        self.model.fit_generator(
+            generator=self.training_generator,
+            validation_data=None,
+            epochs=self.epochs,
+            verbose=1,
+            use_multiprocessing=True,
+            workers=9,
+        )
 
     def save_weights(self):
         if not is_gcp:
-            save_file_name = self.split_folder + "weights.h5"  #if not gcp use original filename
+            save_file_name = (self.split_folder + "weights.h5"
+                              )  # if not gcp use original filename
         else:
-            save_file_name = 'tmp_save.h5'  # if gcp use a temp file
+            save_file_name = "tmp_save.h5"  # if gcp use a temp file
         self.model.save_weights(save_file_name)
 
-        if is_gcp:  #gcp needs the file created locally to then upload
-            save_blob = storage.Client().bucket(BUCKET_NAME).blob(
-                self.split_folder + "weights.h5")
+        if is_gcp:  # gcp needs the file created locally to then upload
+            save_blob = (
+                storage.Client().bucket(BUCKET_NAME).blob(self.split_folder +
+                                                          "weights.h5"))
             save_blob.upload_from_filename(  # this is using the tmp file
-                save_file_name)  #upload the local file made
+                save_file_name)  # upload the local file made
 
     def test(self):
         self.X_test, self.y_gt = self.validation_generator[0]
@@ -225,16 +243,18 @@ class TabCNN:
 
     def save_predictions(self):
         if not is_gcp:
-            save_file_name = self.split_folder + "predictions.npz"  #if not gcp use original filename
+            save_file_name = (self.split_folder + "predictions.npz"
+                              )  # if not gcp use original filename
         else:
-            save_file_name = 'tmp_save.npz'  # if gcp use a temp file
+            save_file_name = "tmp_save.npz"  # if gcp use a temp file
         np.savez(save_file_name, y_pred=self.y_pred, y_gt=self.y_gt)
 
-        if is_gcp:  #gcp needs the file created locally to then upload
-            save_blob = storage.Client().bucket(BUCKET_NAME).blob(
-                self.split_folder + "predictions.npz")
+        if is_gcp:  # gcp needs the file created locally to then upload
+            save_blob = (
+                storage.Client().bucket(BUCKET_NAME).blob(self.split_folder +
+                                                          "predictions.npz"))
             save_blob.upload_from_filename(  # this is using the tmp file
-                save_file_name)  #upload the local file made
+                save_file_name)  # upload the local file made
 
     def evaluate(self):
         self.metrics["pp"].append(pitch_precision(self.y_pred, self.y_gt))
@@ -263,7 +283,7 @@ class TabCNN:
 ########### EXPERIMENT ###########
 ##################################
 tabcnn = TabCNN()
-#tabcnn.clear_previously_created_nodes()
+# tabcnn.clear_previously_created_nodes()
 
 print("logging model...")
 tabcnn.build_model()
