@@ -15,3 +15,20 @@
 9. Save the tablature to a file
 
 """
+
+
+def full_tab(y_pred):
+    tab_dict = {
+        'E': [],
+        'A': [],
+        'D': [],
+        'G': [],
+        'B': [],
+        'e': [],
+    }
+    tablature = pd.DataFrame.from_dict(tab_dict)
+    tablature = tablature.T
+    for frame_idx in range(0, len(y_pred)):
+        this_frame = pd.DataFrame(y_pred[frame_idx])
+        tablature[str(frame_idx)] = this_frame.idxmax(axis='columns')[0]
+    return tablature
