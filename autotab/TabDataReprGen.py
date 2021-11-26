@@ -54,7 +54,8 @@ class TabDataReprGen:
 
         # preprocess audio, store in output dict
         self.output["repr"] = np.swapaxes(self.preprocess_audio(data), 0, 1)
-
+        print(self.output['repr'].shape)
+        
         # construct labels
         frame_indices = range(len(self.output["repr"]))
         times = librosa.frames_to_time(frame_indices,
@@ -176,4 +177,4 @@ def main(args):
 
 if __name__ == "__main__":
     main([0, 'c'])
-    main([1, 'c'])
+    # main([1, 'c'])
