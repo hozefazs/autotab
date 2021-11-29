@@ -131,3 +131,5 @@ webencodings
 websocket-client
 wrapt
 zipp
+
+streamlit
