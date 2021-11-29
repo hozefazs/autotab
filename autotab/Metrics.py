@@ -28,16 +28,16 @@ def tab2bin(tab):
 
 
 def pitch_precision(pred, gt):
-    pitch_pred = np.array(map(tab2pitch, pred))
-    pitch_gt = np.array(map(tab2pitch, gt))
+    pitch_pred = np.array(list(map(tab2pitch, pred)))
+    pitch_gt = np.array(list(map(tab2pitch, gt)))
     numerator = np.sum(np.multiply(pitch_pred, pitch_gt).flatten())
     denominator = np.sum(pitch_pred.flatten())
     return (1.0 * numerator) / denominator
 
 
 def pitch_recall(pred, gt):
-    pitch_pred = np.array(map(tab2pitch, pred))
-    pitch_gt = np.array(map(tab2pitch, gt))
+    pitch_pred = np.array(list(map(tab2pitch, pred)))
+    pitch_gt = np.array(list(map(tab2pitch, gt)))
     numerator = np.sum(np.multiply(pitch_pred, pitch_gt).flatten())
     denominator = np.sum(pitch_gt.flatten())
     return (1.0 * numerator) / denominator
@@ -52,8 +52,8 @@ def pitch_f_measure(pred, gt):
 
 def tab_precision(pred, gt):
     # get rid of "closed" class, as we only want to count positives
-    tab_pred = np.array(map(tab2bin, pred))
-    tab_gt = np.array(map(tab2bin, gt))
+    tab_pred = np.array(list(map(tab2bin, pred)))
+    tab_gt = np.array(list(map(tab2bin, gt)))
     numerator = np.sum(np.multiply(tab_pred, tab_gt).flatten())
     denominator = np.sum(tab_pred.flatten())
     return (1.0 * numerator) / denominator
@@ -61,8 +61,8 @@ def tab_precision(pred, gt):
 
 def tab_recall(pred, gt):
     # get rid of "closed" class, as we only want to count positives
-    tab_pred = np.array(map(tab2bin, pred))
-    tab_gt = np.array(map(tab2bin, gt))
+    tab_pred = np.array(list(map(tab2bin, pred)))
+    tab_gt = np.array(list(map(tab2bin, gt)))
     numerator = np.sum(np.multiply(tab_pred, tab_gt).flatten())
     denominator = np.sum(tab_gt.flatten())
     return (1.0 * numerator) / denominator
