@@ -1,3 +1,4 @@
+import autotab.TabCNN as TabCNN
 """Script to predict the tabs from a model"""
 """
 #### PSEUDOCODE
@@ -32,3 +33,31 @@ def full_tab(y_pred):
         this_frame = pd.DataFrame(y_pred[frame_idx])
         tablature[str(frame_idx)] = this_frame.idxmax(axis='columns')[0]
     return tablature
+
+
+##################################
+########### LOAD MODEL & PREDICT ###########
+##################################
+tabcnn = TabCNN()
+# tabcnn.clear_previously_created_nodes()
+
+print("logging model...")
+tabcnn.build_model()
+tabcnn.log_model()
+
+# Note : our dataset has 6 set of files starting from 00 upto 05
+for fold in range(6):  # The 'fold' is used as the validation set
+    print("\nfold " + str(fold))  #printing the fold number
+    tabcnn.partition_data(
+        fold)  # partitionig of data, with the fold used as validation
+    print("building model...")
+    tabcnn.build_model()  #building the model to do the training
+    print("training...")
+    tabcnn.train()
+    tabcnn.save_weights()
+    print("testing...")
+    tabcnn.test()
+    tabcnn.save_predictions()
+    print("evaluation...")
+    tabcnn.evaluate()
+print("saving results...")
