@@ -85,7 +85,7 @@ def print_tabs(tabs):
     """
     tab_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_long_row = len(str_row(tabs.loc[['e']]))
-    num_div = 5  # Number of divisions per line
+    num_div = 4  # Number of divisions per line
     num_lines = int(len_long_row / 17 // num_div +
                     1)  # Number of lines for the tab
     for line in range(0, num_lines):  # Iterates over lines
@@ -94,6 +94,28 @@ def print_tabs(tabs):
             long_row = str_row(row)
             print(f"{index}|{long_row[num_div*17*line:num_div*17*(line+1)]}")
         print()
+
+
+def web_tabs(tabs):
+    """
+  Takes a tabs dataframe and returns a multilinear string to feed the app
+  """
+    tab_list = ['e', 'B', 'G', 'D', 'A', 'E']
+    len_long_row = len(str_row(tabs.loc[['e']]))
+    num_div = 4  # Number of divisions per line
+    num_lines = int(len_long_row / 17 // num_div +
+                    1)  # Number of lines for the tab
+    line_list = []
+    for line in range(0, num_lines):  # Iterates over lines
+        for index in tab_list:  # Iterates over each index
+            row = tabs.loc[[f'{index}']]
+            long_row = str_row(row)
+            line_list.append(
+                f"{index}|{long_row[num_div*17*line:num_div*17*(line+1)]}")
+        line_list.append("\n")
+    multi_str = '\n'.join([line for line in line_list
+                           ])  # joins all lines into a multistring
+    return multi_str
 
 
 def load_model_and_weights():
