@@ -1,29 +1,134 @@
-# packaging
+# packaging #primary
 pip>=9
 setuptools>=26
 twine
 wheel>=0.29
+python-dotenv
+google-cloud-storage
+streamlit
 
 # data science
 numpy
 pandas
 scikit-learn
+tensorflow
 
-# tests/linter
+# tests/linter #optional
 black
 coverage
 flake8
 pytest
 yapf
 
-# API
+# API #optional
 gcsfs
-google-cloud-storage
 mlflow
 s3fs
 
-# utilities
+# utilities #optional
 six>=1.14
 joblib
 memoized-property
 termcolor
+
+#guitar-set #primary
+librosa
+jams
+sox
+
+#installed as minimal packages by Le Wagon #optional
+anyio
+argon2-cffi
+astroid
+attrs
+Babel
+backcall
+bleach
+certifi
+cffi
+charset-normalizer
+cycler
+debugpy
+decorator
+defusedxml
+entrypoints
+fonttools
+idna
+importlib-resources
+iniconfig
+ipdb
+ipykernel
+ipython
+ipython-genutils
+isort
+jedi
+Jinja2
+joblib
+json5
+jsonschema
+jupyter-client
+jupyter-core
+jupyter-server
+jupyterlab
+jupyterlab-pygments
+jupyterlab-server
+kiwisolver
+lazy-object-proxy
+MarkupSafe
+matplotlib
+matplotlib-inline
+mccabe
+mistune
+nbclassic
+nbclient
+nbconvert
+nbformat
+nest-asyncio
+notebook
+numpy
+packaging
+pandas
+pandocfilters
+parso
+pexpect
+pickleshare
+Pillow
+pip
+platformdirs
+pluggy
+prometheus-client
+prompt-toolkit
+ptyprocess
+py
+pycparser
+Pygments
+pylint
+pyparsing
+pyrsistent
+pytest
+python-dateutil
+pytz
+pyzmq
+requests
+scikit-learn
+scipy
+seaborn
+Send2Trash
+setuptools
+setuptools-scm
+six
+sniffio
+terminado
+testpath
+threadpoolctl
+toml
+tomli
+tornado
+traitlets
+typing_extensions
+urllib3
+wcwidth
+webencodings
+websocket-client
+wrapt
+zipp

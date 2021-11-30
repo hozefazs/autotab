@@ -1,4 +1,33 @@
+# Steps to test the installation
+
+- pip install -e .
+  The above line installs autotab onto your machine
+
+- make first_npz
+  the above line makes the first npz with two annotation files already stored in the guitarset annotation folder and two audio files already stored in your guitarset audio mic folder
+  The output of this command is the npz files saved in data/spec_repr/c folder
+
+- make run_first_model
+  The above line runs the first train of the model, only on the one file provided to you. NOTE : The Test phase of the model will fail, because you have only one file
+
+# Next steps
+
+- Download the entire GuitarSet from
+  https://zenodo.org/record/1422265#.YZ0JEdBBwnK
+  Make sure to select the GuitarSet_audio_and_annotation.zip 7.5GB
+  Unzip and place into the GuitarSet Folder inside data folder. A place holder has already been made for you
+
+- If you wish to make new npz files, at the bottom of TabDataReprGen file, provide two numbers between 0 and 359 as n(must be even) and n + 1 in place of the 0 and 1 currently provided. Then
+- make first_npz
+
+- If you wish to train on this new npz file, search from the beginning of the file name in the data/spec_repr/full_id.csv file, and copy all lines connected to that file into the data/spec_repr/id.csv file. You can then
+- make run_first_model
+
+- (In Progress/TO DO) Parallel_Tab generation for all wav files
+- (In Progress/TO DO) Train model on multiple files
+
 # Data analysis
+
 - Document here the project: autotab
 - Description: Project Description
 - Data Source:
@@ -11,6 +40,7 @@ Please document the project the better you can.
 The initial setup.
 
 Create virtualenv and install the project:
+
 ```bash
 sudo apt-get install virtualenv python-pip python-dev
 deactivate; virtualenv ~/venv ; source ~/venv/bin/activate ;\
@@ -18,6 +48,7 @@ deactivate; virtualenv ~/venv ; source ~/venv/bin/activate ;\
 ```
 
 Unittest test:
+
 ```bash
 make clean install test
 ```
@@ -64,6 +95,7 @@ cd autotab
 pip install -r requirements.txt
 make clean install test                # install and test
 ```
+
 Functionnal test with a script:
 
 ```bash
