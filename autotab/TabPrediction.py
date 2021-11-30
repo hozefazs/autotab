@@ -60,6 +60,22 @@ def make_squeezed_tab(tablature, n=9):
     return squeezed_Tab.astype(int)
 
 
+def str_row(row):
+    row_list = row.values.tolist()[0]
+    row_list = [str(item) for item in row_list]
+    joined = ''.join(row_list)
+    joined = joined.replace("-1", "-")
+    joined = '|'.join([joined[i:i + 16] for i in range(0, len(joined), 16)])
+    return (joined)
+
+
+def print_tabs(tabs):
+    tab_list = ['e', 'B', 'G', 'D', 'A', 'E']
+    for index in tab_list:
+        row = tabs.loc[[f'{index}']]
+        print(f"{index}|{str_row(row)}|")
+
+
 def load_model_and_weights():
     my_tabcnn = TabCNN.TabCNN()
     model = my_tabcnn.build_model()
