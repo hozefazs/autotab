@@ -1,5 +1,7 @@
 import autotab.TabCNN as TabCNN
 import pandas as pd
+from autotab.param import LOCAL_MODEL
+from autotab.TabDataReprGen import TabDataReprGen
 """Script to predict the tabs from a model"""
 """
 #### PSEUDOCODE
@@ -40,14 +42,14 @@ def make_full_tab(labels, num_frames=99):
         frame = pd.DataFrame(
             labels[frame_idx])  # loading frame frame_idx into a dataframe
         # now set (Frame, 0 Fret, where value < 0.9) set as 0
-        frame[0].replace(to_replace=list(frame[0][frame[0] < 0.9]),
-                         value=0,
-                         inplace=True)
+        # frame[0].replace(to_replace=list(frame[0][frame[0] < 0.9]),
+        #                  value=0,
+        #                  inplace=True)
         #now use idmax to check best fret for every string
         fret = list(frame.idxmax(axis='columns'))
         #add fret to tablature
         tablature[frame_idx] = fret
-    return tablature
+    return tablature - 1  #decreasing by 1 so that 0 fret becomes -1 and 1 fret becomes 0
 
 
 def make_squeezed_tab(tablature, n=9):
@@ -63,6 +65,33 @@ def make_squeezed_tab(tablature, n=9):
         frame_batch = tablature.loc[:, batch_idx:batch_idx + n - 1]
         squeezed_Tab[batch_idx] = frame_batch.mode(axis='columns')[0]
     return squeezed_Tab.astype(int)
+
+
+def load_model_and_weights():
+    """Function to load the CNN model with learnt weights for prediction
+
+    Returns:
+        [keras.engine.sequential.Sequential]: The loaded model with its weights
+    """
+    my_tabcnn = TabCNN.TabCNN()
+    model = my_tabcnn.build_model()
+    model.load_weights(LOCAL_MODEL)
+    return model
+
+
+def load_x_new(filename):
+    """function to load the filename to be processed into an x_new ready to be predicted
+
+        Args:
+        filename (str): the file path of the wav file to be processed
+
+        Returns:
+        [numpy.ndArray]: a numpy array of shape
+        num frames x 192 x 9 (con_win) x 1
+    """
+    genrep = TabDataReprGen()
+    x_new = genrep.load_rep_from_raw_file(filename)
+    return x_new
 
 
 if __name__ == "__main__":

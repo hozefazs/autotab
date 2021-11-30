@@ -5,6 +5,7 @@ twine
 wheel>=0.29
 python-dotenv
 google-cloud-storage
+streamlit
 
 # data science
 numpy
@@ -131,5 +132,3 @@ webencodings
 websocket-client
 wrapt
 zipp
-
-streamlit
