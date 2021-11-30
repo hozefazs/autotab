@@ -22,7 +22,14 @@ from autotab.TabDataReprGen import TabDataReprGen
 
 
 def make_empty_tab():
-    tab_dict = {'e': [], 'B': [], 'G': [], 'D': [], 'A': [], 'E': []}
+    tab_dict = {
+        'E': [],
+        'A': [],
+        'D': [],
+        'G': [],
+        'B': [],
+        'e': [],
+    }
     tablature = pd.DataFrame.from_dict(tab_dict)
     tablature = tablature.T
     return tablature
