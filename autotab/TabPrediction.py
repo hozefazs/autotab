@@ -68,19 +68,32 @@ def make_squeezed_tab(tablature, n=9):
 
 
 def str_row(row):
+    """
+    Takes a row of the dataframe and returns it as a processed string
+    """
     row_list = row.values.tolist()[0]
     row_list = [str(item) for item in row_list]
     joined = ''.join(row_list)
-    joined = joined.replace("-1", "-")
+    joined = joined.replace("-1", "-")  # Replaces -1 with -
     joined = '|'.join([joined[i:i + 16] for i in range(0, len(joined), 16)])
-    return (joined)
+    return (joined)  # Returns long string
 
 
 def print_tabs(tabs):
+    """
+    Takes a tabs dataframe and prints it as a formatted tablature
+    """
     tab_list = ['e', 'B', 'G', 'D', 'A', 'E']
-    for index in tab_list:
-        row = tabs.loc[[f'{index}']]
-        print(f"{index}|{str_row(row)}|")
+    len_long_row = len(str_row(tabs.loc[['e']]))
+    num_div = 5  # Number of divisions per line
+    num_lines = int(len_long_row / 17 // num_div +
+                    1)  # Number of lines for the tab
+    for line in range(0, num_lines):  # Iterates over lines
+        for index in tab_list:  # Iterates over each index
+            row = tabs.loc[[f'{index}']]
+            long_row = str_row(row)
+            print(f"{index}|{long_row[num_div*17*line:num_div*17*(line+1)]}")
+        print()
 
 
 def load_model_and_weights():
