@@ -18,7 +18,7 @@ import datetime
 from autotab.Metrics import *
 from google.cloud import storage
 
-from autotab.param import BUCKET_NAME, DATA_BUCKET_FOLDER, GCP
+from autotab.param import BUCKET_NAME, DATA_BUCKET_FOLDER, GCP, LOCAL_DATA
 
 is_gcp = GCP  # boolean to know whether to use GCP buckets
 
@@ -30,16 +30,29 @@ class TabCNN:
         epochs=8,
         con_win_size=9,
         spec_repr="c",
-        data_path="",
+        data_path=LOCAL_DATA,
         # data_path=f"gs://{BUCKET_NAME}/{DATA_BUCKET_FOLDER}/",
         id_file="id.csv",
         save_path="saved/",
     ):
+        """The cross validation model
+
+        Args:
+            batch_size (int, optional): batch size. Defaults to 128.
+            epochs (int, optional): number of times to run all batches. Defaults to 8.
+            con_win_size (int, optional):  sliding window (I belive 9 because kernel is 3x3) Defaults to 9.
+            spec_repr (str, optional): type of transform. Defaults to "c".
+            data_path (str, optional): [description]. Defaults to "".
+            id_file (str, optional): [description]. Defaults to "id.csv".
+            save_path (str, optional): [description]. Defaults to "saved/".
+        """
         # save_path=f"gs://{BUCKET_NAME}/saved/"):
         self.batch_size = batch_size
         self.epochs = epochs
         self.con_win_size = con_win_size
-        self.spec_repr = spec_repr
+        self.spec_repr = spec_repr  #
+
+        # initialize data path
         if is_gcp:
             print("Using Google cloud buckets")
             print(f"BUCKET_NAME {BUCKET_NAME}")
@@ -55,8 +68,10 @@ class TabCNN:
             self.save_path = save_path
         print(self.save_path, flush=True)
 
+        # load all ids in the dataset
         self.load_IDs()
 
+        #setup save folder and log file
         self.save_folder = (
             self.save_path + self.spec_repr + " " +
             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "/")
@@ -68,6 +83,7 @@ class TabCNN:
 
         self.log_file = self.save_folder + "log.txt"
 
+        # setup all the metrics required
         self.metrics = {}
         self.metrics["pp"] = []
         self.metrics["pr"] = []
@@ -80,6 +96,7 @@ class TabCNN:
             "g0", "g1", "g2", "g3", "g4", "g5", "mean", "std dev"
         ]
 
+        # based on the type of repr, choose the input shape
         if self.spec_repr == "c":
             self.input_shape = (192, self.con_win_size, 1)
         elif self.spec_repr == "m":
@@ -97,32 +114,31 @@ class TabCNN:
         pass
 
     def load_IDs(self):
-        """Loads the id.csv files with the name of the music files to fit/predict upon
-
-            Args:
-            data_path ([type]): [description]
-            id_file ([type]): [description]"""
+        """Loads the id.csv files with the name of the music files to fit/predict upon        """
         csv_file = self.data_path + self.id_file
         print(f"getting ids from {csv_file}", flush=True)
         self.list_IDs = list(pd.read_csv(csv_file, header=None)[0])
 
     def partition_data(self, data_split):
-        """[summary]
-
+        """Function to create the training and validation split
+            Note : our dataset has 6 set of files starting from 00 upto 05
             Args:
-            data_split ([type]): [description]"""
+            data_split (int): int between 0 and 5  to determine validation set"""
         self.data_split = data_split
         self.partition = {}
         self.partition["training"] = []
         self.partition["validation"] = []
-        for ID in self.list_IDs:
-            guitarist = int(ID.split("_")[0])
-            if guitarist == data_split:
-                self.partition["validation"].append(ID)
+        for ID in self.list_IDs:  # for all lines in the id.csv file
+            guitarist = int(
+                ID.split("_")
+                [0])  #getting the partition index (first 2 digits) of the file
+            if guitarist == data_split:  # if the partition index equal the validation index
+                self.partition["validation"].append(ID)  #add to validation set
             else:
-                self.partition["training"].append(ID)
+                self.partition["training"].append(
+                    ID)  # else add to training set
 
-        self.training_generator = DataGenerator(
+        self.training_generator = DataGenerator(  # training set generator
             self.partition["training"],
             data_path=self.data_path,
             batch_size=self.batch_size,
@@ -131,7 +147,7 @@ class TabCNN:
             con_win_size=self.con_win_size,
         )
 
-        self.validation_generator = DataGenerator(
+        self.validation_generator = DataGenerator(  # validation set generator
             self.partition["validation"],
             data_path=self.data_path,
             batch_size=len(self.partition["validation"]),
@@ -139,7 +155,7 @@ class TabCNN:
             spec_repr=self.spec_repr,
             con_win_size=self.con_win_size,
         )
-
+        # make a folder in saved mentioning this validation split
         self.split_folder = self.save_folder + str(self.data_split) + "/"
         if not is_gcp:
             if not os.path.exists(self.split_folder):
@@ -171,21 +187,49 @@ class TabCNN:
                 logFileName)  # upload the local file made
 
     def softmax_by_string(self, t):
-        sh = K.shape(t)
+        """The activation function for the last layer of the model
+            Args:
+            t ([type]): the tensor that will be passed in by the model
+
+        Returns:
+            tensor: tensor determining 0,1 for each string
+        """
+        sh = K.shape(
+            t)  # shape of the tensor passed by the model while training
         string_sm = []
-        for i in range(self.num_strings):
+        for i in range(self.num_strings):  # for all strings
+            #provides a dimension in the tensor for each string
             string_sm.append(K.expand_dims(K.softmax(t[:, i, :]), axis=1))
+        # returns concatenated tensor to fill in for each string on/off (1,0)
         return K.concatenate(string_sm, axis=1)
 
     def catcross_by_string(self, target, output):
+        """Categorical Cross Entropy for each string
+
+            Args:
+            target ([type]): Will be provided by model during training
+            output ([type]): Will be provided by model during training
+
+            Returns:
+            float: total categorical cross entropy loss summed over all 6 strings"""
         loss = 0
-        for i in range(self.num_strings):
+        for i in range(self.num_strings):  #for all strings
+            # add their individual cross entropy losses
             loss += K.categorical_crossentropy(target[:, i, :], output[:,
                                                                        i, :])
         return loss
 
     def avg_acc(self, y_true, y_pred):
-        return K.mean(
+        """the accuracy calculation for this training
+
+            Args:
+            y_true ([type]): y_true provided by the model
+            y_pred ([type]): Y_pred predicted by the model
+
+            Returns:
+            float: accuracy of the prediction"""
+        return K.mean(  # the mean of
+            # the scores everytime a prediction is true over all strings
             K.equal(K.argmax(y_true, axis=-1), K.argmax(y_pred, axis=-1)))
 
     def build_model(self):
@@ -204,15 +248,19 @@ class TabCNN:
         model.add(Dropout(0.5))
         model.add(Dense(self.num_classes * self.num_strings))  # no activation
         model.add(Reshape((self.num_strings, self.num_classes)))
-        model.add(Activation(self.softmax_by_string))
+        model.add(Activation(self.softmax_by_string)
+                  )  #adds an activation function at the end for the 6 strings
 
         model.compile(loss=self.catcross_by_string,
                       optimizer=Adadelta(),
                       metrics=[self.avg_acc])
 
         self.model = model
+        return model
 
     def train(self):
+        """training the model
+        """
         self.model.fit_generator(
             generator=self.training_generator,
             validation_data=None,
@@ -223,6 +271,8 @@ class TabCNN:
         )
 
     def save_weights(self):
+        """Save the model/"weights"
+        """
         if not is_gcp:
             save_file_name = (self.split_folder + "weights.h5"
                               )  # if not gcp use original filename
@@ -238,10 +288,14 @@ class TabCNN:
                 save_file_name)  # upload the local file made
 
     def test(self):
+        """do a prediction on the first item in the validation set
+        """
         self.X_test, self.y_gt = self.validation_generator[0]
         self.y_pred = self.model.predict(self.X_test)
 
     def save_predictions(self):
+        """and then save that prediction
+        """
         if not is_gcp:
             save_file_name = (self.split_folder + "predictions.npz"
                               )  # if not gcp use original filename
@@ -257,6 +311,8 @@ class TabCNN:
                 save_file_name)  # upload the local file made
 
     def evaluate(self):
+        """do an evaluation on the prediction
+        """
         self.metrics["pp"].append(pitch_precision(self.y_pred, self.y_gt))
         self.metrics["pr"].append(pitch_recall(self.y_pred, self.y_gt))
         self.metrics["pf"].append(pitch_f_measure(self.y_pred, self.y_gt))
@@ -266,6 +322,8 @@ class TabCNN:
         self.metrics["tdr"].append(tab_disamb(self.y_pred, self.y_gt))
 
     def save_results_csv(self):
+        """Save all the metrics to results.csv
+        """
         output = {}
         for key in self.metrics.keys():
             if key != "data":
@@ -279,28 +337,31 @@ class TabCNN:
         df.to_csv(self.save_folder + "results.csv")
 
 
-##################################
-########### EXPERIMENT ###########
-##################################
-tabcnn = TabCNN()
-# tabcnn.clear_previously_created_nodes()
+if __name__ == "__main__":
+    ##################################
+    ########### EXPERIMENT ###########
+    ##################################
+    tabcnn = TabCNN()
+    # tabcnn.clear_previously_created_nodes()
 
-print("logging model...")
-tabcnn.build_model()
-tabcnn.log_model()
-
-for fold in range(6):
-    print("\nfold " + str(fold))
-    tabcnn.partition_data(fold)
-    print("building model...")
+    print("logging model...")
     tabcnn.build_model()
-    print("training...")
-    tabcnn.train()
-    tabcnn.save_weights()
-    print("testing...")
-    tabcnn.test()
-    tabcnn.save_predictions()
-    print("evaluation...")
-    tabcnn.evaluate()
-print("saving results...")
-tabcnn.save_results_csv()
+    tabcnn.log_model()
+
+    # Note : our dataset has 6 set of files starting from 00 upto 05
+    for fold in range(6):  # The 'fold' is used as the validation set
+        print("\nfold " + str(fold))  #printing the fold number
+        tabcnn.partition_data(
+            fold)  # partitionig of data, with the fold used as validation
+        print("building model...")
+        tabcnn.build_model()  #building the model to do the training
+        print("training...")
+        tabcnn.train()
+        tabcnn.save_weights()
+        print("testing...")
+        tabcnn.test()
+        tabcnn.save_predictions()
+        print("evaluation...")
+        tabcnn.evaluate()
+    print("saving results...")
+    tabcnn.save_results_csv()

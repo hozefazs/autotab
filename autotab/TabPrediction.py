@@ -1,5 +1,6 @@
 import autotab.TabCNN as TabCNN
 import pandas as pd
+from autotab.param import LOCAL_MODEL
 """Script to predict the tabs from a model"""
 """
 #### PSEUDOCODE
@@ -20,14 +21,7 @@ import pandas as pd
 
 
 def make_empty_tab():
-    tab_dict = {
-        'E': [],
-        'A': [],
-        'D': [],
-        'G': [],
-        'B': [],
-        'e': [],
-    }
+    tab_dict = {'e': [], 'B': [], 'G': [], 'D': [], 'A': [], 'E': []}
     tablature = pd.DataFrame.from_dict(tab_dict)
     tablature = tablature.T
     return tablature
@@ -40,14 +34,14 @@ def make_full_tab(labels, num_frames=99):
         frame = pd.DataFrame(
             labels[frame_idx])  # loading frame frame_idx into a dataframe
         # now set (Frame, 0 Fret, where value < 0.9) set as 0
-        frame[0].replace(to_replace=list(frame[0][frame[0] < 0.9]),
-                         value=0,
-                         inplace=True)
+        # frame[0].replace(to_replace=list(frame[0][frame[0] < 0.9]),
+        #                  value=0,
+        #                  inplace=True)
         #now use idmax to check best fret for every string
         fret = list(frame.idxmax(axis='columns'))
         #add fret to tablature
         tablature[frame_idx] = fret
-    return tablature
+    return tablature - 1  #decreasing by 1 so that 0 fret becomes -1 and 1 fret becomes 0
 
 
 def make_squeezed_tab(tablature, n=9):
@@ -63,6 +57,13 @@ def make_squeezed_tab(tablature, n=9):
         frame_batch = tablature.loc[:, batch_idx:batch_idx + n - 1]
         squeezed_Tab[batch_idx] = frame_batch.mode(axis='columns')[0]
     return squeezed_Tab.astype(int)
+
+
+def load_model_and_weights():
+    my_tabcnn = TabCNN.TabCNN()
+    model = my_tabcnn.build_model()
+    model.load_weights(LOCAL_MODEL)
+    return model
 
 
 if __name__ == "__main__":
