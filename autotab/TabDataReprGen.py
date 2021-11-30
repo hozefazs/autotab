@@ -55,7 +55,7 @@ class TabDataReprGen:
         # preprocess audio, store in output dict
         self.output["repr"] = np.swapaxes(self.preprocess_audio(data), 0, 1)
         print(self.output['repr'].shape)
-        
+
         # construct labels
         frame_indices = range(len(self.output["repr"]))
         times = librosa.frames_to_time(frame_indices,
@@ -166,6 +166,38 @@ class TabDataReprGen:
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         self.save_data(save_path + filename + ".npz")
+
+    def load_rep_from_raw_file(self, filename):
+        """Function to generate x_new data from a wave file
+            to feed into the prediction model
+                Args:
+                filename (string): location of the file to be pre-processed
+                Returns:
+                [numpy.ndArray]: a numpy array of shape
+                num frames x 192 x 9 (con_win) x 1
+            """
+        self.con_win_size = 9
+        self.half_win = self.con_win_size // 2
+        file_audio = filename
+        self.sr_original, data = wavfile.read(file_audio)
+        self.sr_curr = self.sr_original
+        # preprocess audio, store in output dict
+        repr = np.swapaxes(self.preprocess_audio(data), 0, 1)
+        full_x = np.pad(
+            repr,
+            [
+                (self.half_win, self.half_win
+                 ),  # full x is the entire song padded with halfwin*2 frames
+                (0, 0)
+            ],
+            mode='constant')
+        x_new = []
+        for frame_idx in range(0,
+                               len(repr)):  # for all frames in the experiment
+            sample_x = full_x[frame_idx:frame_idx + self.con_win_size]
+            x_new.append(np.expand_dims(np.swapaxes(sample_x, 0, 1), -1))
+        x_new = np.array(x_new, dtype='float32')
+        return x_new
 
 
 def main(args):

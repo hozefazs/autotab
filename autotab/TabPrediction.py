@@ -1,6 +1,7 @@
 import autotab.TabCNN as TabCNN
 import pandas as pd
 from autotab.param import LOCAL_MODEL
+from autotab.TabDataReprGen import TabDataReprGen
 """Script to predict the tabs from a model"""
 """
 #### PSEUDOCODE
@@ -64,6 +65,19 @@ def load_model_and_weights():
     model = my_tabcnn.build_model()
     model.load_weights(LOCAL_MODEL)
     return model
+
+
+def load_x_new(filename):
+    """function to load the filename to be processed into an x_new ready to be predicted
+        Args:
+        filename (str): the file path of the wav file to be processed
+        Returns:
+        [numpy.ndArray]: a numpy array of shape
+        num frames x 192 x 9 (con_win) x 1
+    """
+    genrep = TabDataReprGen()
+    x_new = genrep.load_rep_from_raw_file(filename)
+    return x_new
 
 
 if __name__ == "__main__":
