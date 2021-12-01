@@ -67,6 +67,47 @@ def make_squeezed_tab(tablature, n=9):
     return squeezed_Tab.astype(int)
 
 
+def make_dynamic_tab(full_tab, n=5):
+    """Makes a dynamic tab from a full tab, squeezing frames which are same
+        for n frames and retaining fret changes between frames. All other frets are removed
+
+        Args:
+        full_tab (pandas.DataFrame): a dataframe with the full tabs
+        n (int, optional): the number of frames with equal frets to squeeze. Defaults to 5 (which means 0.2sec*5=1sec)
+        Note : fret changes beteen frmes will be retained
+
+        Returns:
+        (pandas.DataFrame): The dynamically squeezed DataFrame
+    """
+    dynamic_tab = make_empty_tab()  # make the empty dynamic_tab
+    col_read = 0  # set the red pointer to 0
+    col_write = 0  # set the write pointer to 0
+    total_frames = full_tab.shape[
+        1]  # this is the maximum number of frames in the full tab
+    while col_read < total_frames - 1:  #keep doing until you reach the last frame
+        changed = False  # set changed as false
+        max_col = col_read + n  # this is the window from current col + n cols ahead 5/0
+        while ((not changed) and (col_read < max_col)
+               and (col_read < total_frames - 1)
+               ):  # only if not changed and full window not checked
+            if not full_tab[col_read].equals(full_tab[col_read + 1]):
+                # if current column doesnt equal next column, meaning change
+                dynamic_tab[col_write] = full_tab[
+                    col_read]  # write this col to the dynamic tab
+                col_write = col_write + 1  # advance the write counter
+                changed = True  # set changed to true
+            col_read = col_read + 1  # advance the read counter, either ways
+        if not changed:  # this means the entire window was checked but no change
+            dynamic_tab[col_write] = full_tab[
+                col_read - 1]  # so write the last entry of this window
+            col_write = col_write + 1  # advance the write counter
+    # below code is commented, as it sometimes causes problems with the last frame, need to debug, but still works fine without this section
+    # #need to take care of the last column
+    # if not dynamic_tab[col_write].equals(full_tab[col_read]):#if last written doesnt equal to last col in full_tab
+    #     dynamic_tab[col_write + 1] = full_tab[col_read] #write this column
+    return dynamic_tab
+
+
 def str_row(row):
     """
     Takes a row of the dataframe and returns it as a processed string
@@ -85,7 +126,7 @@ def print_tabs(tabs):
     """
     tab_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_long_row = len(str_row(tabs.loc[['e']]))
-    num_div = 5  # Number of divisions per line
+    num_div = 4  # Number of divisions per line
     num_lines = int(len_long_row / 17 // num_div +
                     1)  # Number of lines for the tab
     for line in range(0, num_lines):  # Iterates over lines
@@ -94,6 +135,28 @@ def print_tabs(tabs):
             long_row = str_row(row)
             print(f"{index}|{long_row[num_div*17*line:num_div*17*(line+1)]}")
         print()
+
+
+def web_tabs(tabs):
+    """
+  Takes a tabs dataframe and returns a multilinear string to feed the app
+  """
+    tab_list = ['e', 'B', 'G', 'D', 'A', 'E']
+    len_long_row = len(str_row(tabs.loc[['e']]))
+    num_div = 4  # Number of divisions per line
+    num_lines = int(len_long_row / 17 // num_div +
+                    1)  # Number of lines for the tab
+    line_list = []
+    for line in range(0, num_lines):  # Iterates over lines
+        for index in tab_list:  # Iterates over each index
+            row = tabs.loc[[f'{index}']]
+            long_row = str_row(row)
+            line_list.append(
+                f"{index}|{long_row[num_div*17*line:num_div*17*(line+1)]}")
+        line_list.append("\n")
+    multi_str = '\n'.join([line for line in line_list
+                           ])  # joins all lines into a multistring
+    return multi_str
 
 
 def load_model_and_weights():
