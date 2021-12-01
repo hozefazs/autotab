@@ -132,3 +132,6 @@ webencodings
 websocket-client
 wrapt
 zipp
+
+uvicorn
+fastapi

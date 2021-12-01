@@ -1,1 +1,1 @@
- web: sh setup.sh && streamlit run streamlit/autotab_app.py
+streamlit run streamlit/autotab_app.py
