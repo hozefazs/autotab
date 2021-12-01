@@ -9,8 +9,8 @@ streamlit
 # data science
 numpy
 pandas
-scikit-learn
-# tensorflow
+# scikit-learn
+tensorflow
 
 # utilities #optional
 six>=1.14
