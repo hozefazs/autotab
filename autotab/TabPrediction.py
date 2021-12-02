@@ -154,7 +154,7 @@ def print_tabs(tabs, num_div=4, len_div=16):
             last_value = idx          # Last frame playing a string
             break
     tabs = tabs.drop(
-        [col for col in range(tot_col_idx,last_value,-1)],axis=1) # Shortens tabs
+        [col for col in range(tot_col_idx,last_value+5,-1)],axis=1) # Shortens tabs
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_plus = len_div + 1  # Length of division plus |
     len_long_row = max(
@@ -196,7 +196,7 @@ def web_tabs(tabs, num_div=4, len_div=16):
         if sum_col != -6:
             last_value = idx  # Last frame playing a string
             break
-    tabs = tabs.drop([col for col in range(tot_col_idx, last_value, -1)],
+    tabs = tabs.drop([col for col in range(tot_col_idx, last_value+5, -1)],
                      axis=1)  # Shortens tabs
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_plus = len_div + 1  # Length of division plus |
