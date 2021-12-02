@@ -1,0 +1,1 @@
+streamlit run streamlit/autotab_app.py
