@@ -11,8 +11,11 @@ COPY README.md /README.md
 COPY Procfile /Procfile
 COPY requirements.txt /requirements.txt
 COPY setup.py /setup.py
+COPY api/api_app.py /api/api_app.py
 
 RUN pip install --upgrade pip 
 RUN pip install -r requirements.txt
+RUN apt-get update -y && apt-get install -y --no-install-recommends build-essential gcc \
+                                        libsndfile1 
 
-CMD uvicorn api.simple:app --host 0.0.0.0 --port $PORT
+CMD uvicorn api.api_app:app --host 0.0.0.0 --port $PORT

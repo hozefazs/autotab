@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np 
 from autotab.TabDataReprGen import TabDataReprGen
 from PIL import Image
-import base64
 
 st.set_page_config(
     page_title="AutoTab tab generator",
@@ -43,29 +42,34 @@ CSS = """
 """
 st.write(f'<style>{CSS}</style>', unsafe_allow_html=True)
 
-# st.title('Model')
-
-model = tp.load_model_and_weights()
-model.load_weights('./h5-model/full_val0_75acc_weights.h5')
-
-# st.write(model.weights[0].shape)
 
 st.set_option('deprecation.showfileUploaderEncoding', False)
 
 uploaded_file = st.file_uploader("choose a music file:", type="wav")
 
+processed_file = None
+
 mode = st.radio('Choose Mode of Tab production:', ('squeezed notes', 'changed notes'))
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
+model = tp.load_model_and_weights()
+model.load_weights('./h5-model/full_val0_75acc_weights.h5')
+genrep = TabDataReprGen()
 
+if uploaded_file is not None:
+    x_new = genrep.load_rep_from_raw_file(uploaded_file)
+    y_pred = model.predict(x_new)
+    processed_file= uploaded_file
+    
 if uploaded_file is not None and mode == 'squeezed notes': 
     st.title("""
             The predicted squeezed Tabs: 
     """)
-    genrep = TabDataReprGen()
-    x_new = genrep.load_rep_from_raw_file(uploaded_file)
-    # st.write(x_new.shape)
-    y_pred = model.predict(x_new)
+    if uploaded_file != processed_file:        
+        x_new = genrep.load_rep_from_raw_file(uploaded_file)
+        # st.write(x_new.shape)
+        y_pred = model.predict(x_new)
+        processed_file = uploaded_file
     
     expanded_tab = tp.make_full_tab(y_pred, len(y_pred))
     display_tab = tp.make_squeezed_tab(expanded_tab)
@@ -75,10 +79,11 @@ if uploaded_file is not None and mode == 'changed notes':
     st.title("""
             The predicted changed notes Tabs: 
     """)
-    genrep = TabDataReprGen()
-    x_new = genrep.load_rep_from_raw_file(uploaded_file)
-    # st.write(x_new.shape)
-    y_pred = model.predict(x_new)
+    if uploaded_file != processed_file:        
+        x_new = genrep.load_rep_from_raw_file(uploaded_file)
+        # st.write(x_new.shape)
+        y_pred = model.predict(x_new)
+        processed_file = uploaded_file
     
     expanded_tab = tp.make_full_tab(y_pred, len(y_pred))
     display_tab = tp.make_dynamic_tab(expanded_tab)
