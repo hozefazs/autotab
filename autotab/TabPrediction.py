@@ -147,16 +147,14 @@ def print_tabs(tabs, num_div=4, len_div=16):
     num_div is number of divisions per line, default is 4
     len_div is length of each division, default is 16
     """
-    """
     tot_col_idx = tabs.shape[1]-1  # Last index of frame
     for idx in range(tot_col_idx,0,-1):
         sum_col = tabs.iloc[:,idx].sum()
         if sum_col != -6:
             last_value = idx          # Last frame playing a string
             break
-    tabs = tabs.drop(
-        [col for col in range(tot_col_idx,last_value+5,-1)],axis=1) # Shortens tabs
-    """
+    N = tot_col_idx-last_value    # Number of columns to drop
+    tabs = tabs.iloc[: , :-N]
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_plus = len_div + 1  # Length of division plus |
     len_long_row = max(
@@ -192,16 +190,14 @@ def web_tabs(tabs, num_div=4, len_div=16):
     num_div is number of divisions per line, default is 4
     len_div is length of each division, default is 16
     """
-    """
     tot_col_idx = tabs.shape[1] - 1  # Last index of frame
     for idx in range(tot_col_idx, 0, -1):
         sum_col = tabs.iloc[:, idx].sum()
         if sum_col != -6:
             last_value = idx  # Last frame playing a string
             break
-    tabs = tabs.drop([col for col in range(tot_col_idx, last_value+5, -1)],
-                     axis=1)  # Shortens tabs
-    """
+    N = tot_col_idx-last_value    # Number of columns to drop
+    tabs = tabs.iloc[: , :-N]
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_plus = len_div + 1  # Length of division plus |
     len_long_row = max([
