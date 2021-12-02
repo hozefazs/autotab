@@ -23,7 +23,18 @@ def string_distance(curr, prev):
 def frame_distance(curr, prev):
     frame_changes = list(map(string_distance, curr, prev))
     total_change = np.sum(frame_changes)
+    # adding the fret variance as well to the distance to penalize frames with frets too far apart
+    #total_change = total_change + fret_variance(curr)
     return total_change
+
+
+def fret_variance(frame):
+    frame_np = np.array(frame)
+    #consider only those string which are actually fretted
+    frame_frets = frame_np[frame_np > 0]
+    if len(frame_frets) > 0:  #if there are fretted strings
+        return np.var(frame_frets)  # return variance
+    return 0  #else return no variance
 
 
 def frame_to_midi(frame):
@@ -68,7 +79,7 @@ def best_frame(curr, prev):
     best_options = []
     for idx in best_options_idx:
         best_options.append(options[idx])
-    variances = list(map(np.var, best_options))
+    variances = list(map(fret_variance, best_options))
     lowest_var_option = best_options[np.argmin(variances)]
     return lowest_var_option
 

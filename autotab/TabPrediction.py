@@ -2,6 +2,8 @@ import autotab.TabCNN as TabCNN
 import pandas as pd
 from autotab.param import LOCAL_MODEL
 from autotab.TabDataReprGen import TabDataReprGen
+import autotab.TabErgonomics as te
+import numpy as np
 """Script to predict the tabs from a model"""
 """
 #### PSEUDOCODE
@@ -49,6 +51,19 @@ def make_full_tab(labels, num_frames=99):
         fret = list(frame.idxmax(axis='columns'))
         #add fret to tablature
         tablature[frame_idx] = fret
+    return tablature - 1  #decreasing by 1 so that 0 fret becomes -1 and 1 fret becomes 0
+
+
+def make_smart_tab(labels, num_frames=99):
+    tablature = make_empty_tab()
+    # loop over all frames to add for all frame (lets test for num_frames frames)
+    prev_fret = [-1, -1, -1, -1, -1, -1]
+    for frame_idx in range(0, num_frames):
+        fret = list(map(np.argmax, labels[frame_idx]))
+        #add fret to tablature
+        smart_fret = te.best_frame(fret, prev_fret)
+        tablature[frame_idx] = smart_fret
+        prev_fret = smart_fret
     return tablature - 1  #decreasing by 1 so that 0 fret becomes -1 and 1 fret becomes 0
 
 
@@ -119,7 +134,7 @@ def str_row(row, len_div=16):
     joined = joined.replace("-1", "-")  # Replaces -1 with -
     joined = '|'.join(
         [joined[i:i + len_div] for i in range(0, len(joined), len_div)])
-    return (joined)      # Returns formatted string
+    return (joined)  # Returns formatted string
 
 
 def print_tabs(tabs, num_div=4, len_div=16):
@@ -129,23 +144,23 @@ def print_tabs(tabs, num_div=4, len_div=16):
     len_div is length of each division, default is 16
     """
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
-    len_plus = len_div + 1      # Length of division plus |
+    len_plus = len_div + 1  # Length of division plus |
     len_long_row = max(
         [len(str_row(tabs.loc[[string]], len_div)) for string in string_list])
     num_lines = int(len_long_row / len_plus // num_div +
-                    1)          # Number of lines for the tab
-    for line in range(0, num_lines):                # Iterates over lines
-        for index in string_list:                   # Iterates over each string
+                    1)  # Number of lines for the tab
+    for line in range(0, num_lines):  # Iterates over lines
+        for index in string_list:  # Iterates over each string
             row = tabs.loc[[f'{index}']]
             long_row = str_row(row, len_div)
-            if line == (num_lines - 1):             # Completes last line
+            if line == (num_lines - 1):  # Completes last line
                 len_row = len(str_row(tabs.loc[[index]],
-                                      len_div))     # Length of this row
+                                      len_div))  # Length of this row
                 len_last_line = len_row - len_plus * num_div * (
-                    num_lines - 1)                  # Length of last line
+                    num_lines - 1)  # Length of last line
                 finish_str_number = len_div - (
                     len_last_line - len_plus * (len_last_line // len_plus)
-                )                                   # Number of dashes to complete line
+                )  # Number of dashes to complete line
                 completing_str = f"{'-'*finish_str_number}|"  # String to complete line
                 print(
                     f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}{completing_str}"
@@ -164,26 +179,26 @@ def web_tabs(tabs, num_div=4, len_div=16):
     len_div is length of each division, default is 16
     """
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
-    len_plus = len_div + 1      # Length of division plus |
+    len_plus = len_div + 1  # Length of division plus |
     len_long_row = max([
-        len(str_row(            # Length of long edited row
+        len(str_row(  # Length of long edited row
             tabs.loc[[string]], len_div)) for string in string_list
     ])
     num_lines = int(len_long_row / len_plus // num_div +
-                    1)          # Number of lines for the tab
+                    1)  # Number of lines for the tab
     line_list = []
-    for line in range(0, num_lines):                # Iterates over lines
-        for index in string_list:                   # Iterates over each string
+    for line in range(0, num_lines):  # Iterates over lines
+        for index in string_list:  # Iterates over each string
             row = tabs.loc[[f'{index}']]
             long_row = str_row(row, len_div)
-            if line == (num_lines - 1):             # Completes last line
+            if line == (num_lines - 1):  # Completes last line
                 len_row = len(str_row(tabs.loc[[index]],
-                                      len_div))     # Length of this row
+                                      len_div))  # Length of this row
                 len_last_line = len_row - len_plus * num_div * (
-                    num_lines - 1)                  # Length of last line
+                    num_lines - 1)  # Length of last line
                 finish_str_number = len_div - (
                     len_last_line - len_plus * (len_last_line // len_plus)
-                )                                   # Number of dashes to complete line
+                )  # Number of dashes to complete line
                 completing_str = f"{'-'*finish_str_number}|"  # String to complete line
                 line_list.append(
                     f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}{completing_str}"
