@@ -38,6 +38,8 @@ def make_empty_tab():
 
 
 def make_full_tab(labels, num_frames=99):
+    if num_frames==99:
+        num_frames=len(labels) # If function is called with one arg, it will display full tab
     tablature = make_empty_tab()
     # loop over all frames to add for all frame (lets test for num_frames frames)
     for frame_idx in range(0, num_frames):
@@ -55,6 +57,8 @@ def make_full_tab(labels, num_frames=99):
 
 
 def make_smart_tab(labels, num_frames=99):
+    if num_frames==99:
+        num_frames=len(labels) # If function is called with one arg, it will display full tab
     tablature = make_empty_tab()
     # loop over all frames to add for all frame (lets test for num_frames frames)
     prev_fret = [-1, -1, -1, -1, -1, -1]
@@ -143,6 +147,14 @@ def print_tabs(tabs, num_div=4, len_div=16):
     num_div is number of divisions per line, default is 4
     len_div is length of each division, default is 16
     """
+    tot_col_idx = tabs.shape[1]-1  # Last index of frame
+    for idx in range(tot_col_idx,0,-1):
+        sum_col = tabs.iloc[:,idx].sum()
+        if sum_col != -6:
+            last_value = idx          # Last frame playing a string
+            break
+    tabs = tabs.drop(
+        [col for col in range(tot_col_idx,last_value,-1)],axis=1) # Shortens tabs
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_plus = len_div + 1  # Length of division plus |
     len_long_row = max(
@@ -178,6 +190,14 @@ def web_tabs(tabs, num_div=4, len_div=16):
     num_div is number of divisions per line, default is 4
     len_div is length of each division, default is 16
     """
+    tot_col_idx = tabs.shape[1] - 1  # Last index of frame
+    for idx in range(tot_col_idx, 0, -1):
+        sum_col = tabs.iloc[:, idx].sum()
+        if sum_col != -6:
+            last_value = idx  # Last frame playing a string
+            break
+    tabs = tabs.drop([col for col in range(tot_col_idx, last_value, -1)],
+                     axis=1)  # Shortens tabs
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_plus = len_div + 1  # Length of division plus |
     len_long_row = max([
