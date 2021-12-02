@@ -166,17 +166,19 @@ def print_tabs(tabs, num_div=4, len_div=16):
             row = tabs.loc[[f'{index}']]
             long_row = str_row(row, len_div)
             if line == (num_lines - 1):  # Completes last line
-                len_row = len(str_row(tabs.loc[[index]],
-                                      len_div))  # Length of this row
-                len_last_line = len_row - len_plus * num_div * (
-                    num_lines - 1)  # Length of last line
-                finish_str_number = len_div - (
-                    len_last_line - len_plus * (len_last_line // len_plus)
-                )  # Number of dashes to complete line
-                completing_str = f"{'-'*finish_str_number}|"  # String to complete line
+                univ_len_last_line = len_long_row-len_plus*num_div*(
+                    num_lines-1)         # Universal length of last line #134
+                len_row = len(str_row(tabs.loc[[index]],len_div))       # Length of this row
+                len_last_line = len_row - len_plus * num_div * (        # Length of this last line #115
+                    num_lines - 1)
+                finish_str_number = len_div-(
+                    len_last_line-len_plus*(len_last_line//len_plus))   # Number of dashes to complete line in last div
+                num_comp_div_finish = (
+                    univ_len_last_line-len_last_line)//len_plus  #Complete divisions till end
+                completing_str = f"{'-'*finish_str_number}|{('-'*len_div+'|')*num_comp_div_finish}"    # String to complete line
                 print(
-                    f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}{completing_str}"
-                )
+                    f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}{completing_str}")
+
             else:
                 print(
                     f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}"
@@ -212,14 +214,16 @@ def web_tabs(tabs, num_div=4, len_div=16):
             row = tabs.loc[[f'{index}']]
             long_row = str_row(row, len_div)
             if line == (num_lines - 1):  # Completes last line
-                len_row = len(str_row(tabs.loc[[index]],
-                                      len_div))  # Length of this row
-                len_last_line = len_row - len_plus * num_div * (
-                    num_lines - 1)  # Length of last line
-                finish_str_number = len_div - (
-                    len_last_line - len_plus * (len_last_line // len_plus)
-                )  # Number of dashes to complete line
-                completing_str = f"{'-'*finish_str_number}|"  # String to complete line
+                univ_len_last_line = len_long_row-len_plus*num_div*(
+                    num_lines-1)         # Universal length of last line #134
+                len_row = len(str_row(tabs.loc[[index]],len_div))       # Length of this row
+                len_last_line = len_row - len_plus * num_div * (        # Length of this last line #115
+                    num_lines - 1)
+                finish_str_number = len_div-(
+                    len_last_line-len_plus*(len_last_line//len_plus))   # Number of dashes to complete line in last div
+                num_comp_div_finish = (
+                    univ_len_last_line-len_last_line)//len_plus  #Complete divisions till end
+                completing_str = f"{'-'*finish_str_number}|{('-'*len_div+'|')*num_comp_div_finish}"    # String to complete line
                 line_list.append(
                     f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}{completing_str}"
                 )
