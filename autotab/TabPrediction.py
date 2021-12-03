@@ -38,6 +38,8 @@ def make_empty_tab():
 
 
 def make_full_tab(labels, num_frames=99):
+    if num_frames==99:
+        num_frames=len(labels) # If function is called with one arg, it will display full tab
     tablature = make_empty_tab()
     # loop over all frames to add for all frame (lets test for num_frames frames)
     for frame_idx in range(0, num_frames):
@@ -55,6 +57,8 @@ def make_full_tab(labels, num_frames=99):
 
 
 def make_smart_tab(labels, num_frames=99):
+    if num_frames==99:
+        num_frames=len(labels) # If function is called with one arg, it will display full tab
     tablature = make_empty_tab()
     # loop over all frames to add for all frame (lets test for num_frames frames)
     prev_fret = [-1, -1, -1, -1, -1, -1]
@@ -143,6 +147,14 @@ def print_tabs(tabs, num_div=4, len_div=16):
     num_div is number of divisions per line, default is 4
     len_div is length of each division, default is 16
     """
+    tot_col_idx = tabs.shape[1]-1  # Last index of frame
+    for idx in range(tot_col_idx,0,-1):
+        sum_col = tabs.iloc[:,idx].sum()
+        if sum_col != -6:
+            last_value = idx          # Last frame playing a string
+            break
+    N = tot_col_idx-last_value    # Number of columns to drop
+    tabs = tabs.iloc[: , :-N]
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_plus = len_div + 1  # Length of division plus |
     len_long_row = max(
@@ -154,17 +166,18 @@ def print_tabs(tabs, num_div=4, len_div=16):
             row = tabs.loc[[f'{index}']]
             long_row = str_row(row, len_div)
             if line == (num_lines - 1):  # Completes last line
-                len_row = len(str_row(tabs.loc[[index]],
-                                      len_div))  # Length of this row
-                len_last_line = len_row - len_plus * num_div * (
-                    num_lines - 1)  # Length of last line
-                finish_str_number = len_div - (
-                    len_last_line - len_plus * (len_last_line // len_plus)
-                )  # Number of dashes to complete line
-                completing_str = f"{'-'*finish_str_number}|"  # String to complete line
+                univ_len_last_line = len_plus * num_div  # Universal length of last line
+                len_row = len(str_row(tabs.loc[[index]],len_div))       # Length of this row
+                len_last_line = len_row - len_plus * num_div * (        # Length of this last line
+                    num_lines - 1)
+                finish_str_number = len_div-(
+                    len_last_line-len_plus*(len_last_line//len_plus))   # Number of dashes to complete line in last div
+                num_comp_div_finish = (
+                    univ_len_last_line-len_last_line)//len_plus  #Complete divisions until end
+                completing_str = f"{'-'*finish_str_number}|{('-'*len_div+'|')*num_comp_div_finish}"    # String to complete line
                 print(
-                    f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}{completing_str}"
-                )
+                    f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}{completing_str}")
+
             else:
                 print(
                     f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}"
@@ -178,6 +191,14 @@ def web_tabs(tabs, num_div=4, len_div=16):
     num_div is number of divisions per line, default is 4
     len_div is length of each division, default is 16
     """
+    tot_col_idx = tabs.shape[1] - 1  # Last index of frame
+    for idx in range(tot_col_idx, 0, -1):
+        sum_col = tabs.iloc[:, idx].sum()
+        if sum_col != -6:
+            last_value = idx  # Last frame playing a string
+            break
+    N = tot_col_idx-last_value    # Number of columns to drop
+    tabs = tabs.iloc[: , :-N]
     string_list = ['e', 'B', 'G', 'D', 'A', 'E']
     len_plus = len_div + 1  # Length of division plus |
     len_long_row = max([
@@ -192,14 +213,15 @@ def web_tabs(tabs, num_div=4, len_div=16):
             row = tabs.loc[[f'{index}']]
             long_row = str_row(row, len_div)
             if line == (num_lines - 1):  # Completes last line
-                len_row = len(str_row(tabs.loc[[index]],
-                                      len_div))  # Length of this row
-                len_last_line = len_row - len_plus * num_div * (
-                    num_lines - 1)  # Length of last line
-                finish_str_number = len_div - (
-                    len_last_line - len_plus * (len_last_line // len_plus)
-                )  # Number of dashes to complete line
-                completing_str = f"{'-'*finish_str_number}|"  # String to complete line
+                univ_len_last_line = len_plus * num_div  # Universal length of last line
+                len_row = len(str_row(tabs.loc[[index]],len_div))       # Length of this row
+                len_last_line = len_row - len_plus * num_div * (        # Length of this last line
+                    num_lines - 1)
+                finish_str_number = len_div-(
+                    len_last_line-len_plus*(len_last_line//len_plus))   # Number of dashes to complete line in last div
+                num_comp_div_finish = (
+                    univ_len_last_line-len_last_line)//len_plus  #Complete divisions until end
+                completing_str = f"{'-'*finish_str_number}|{('-'*len_div+'|')*num_comp_div_finish}"    # String to complete line
                 line_list.append(
                     f"{index}|{long_row[num_div*len_plus*line:num_div*len_plus*(line+1)]}{completing_str}"
                 )
