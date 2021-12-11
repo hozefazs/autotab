@@ -29,18 +29,18 @@ class TabDataReprGen:
         # cm = cqt + melspec
         # s = stft
         #
-        self.preproc_mode = mode    # Preprocessing mode for the wav file data
-        self.downsample = True      # Select to lower sample rate of data
-        self.normalize = True       # Select to normalize data
-        self.sr_downs = 22050       # Lowered sample rate
+        self.preproc_mode = mode  # Preprocessing mode for the wav file data
+        self.downsample = True  # Select to lower sample rate of data
+        self.normalize = True  # Select to normalize data
+        self.sr_downs = 22050  # Lowered sample rate
 
         # CQT parameters
-        self.cqt_n_bins = 192           # Number of bins for the constant-Q transform "c"
-        self.cqt_bins_per_octave = 24   # Number of bins per octave
+        self.cqt_n_bins = 192  # Number of bins for the constant-Q transform "c"
+        self.cqt_bins_per_octave = 24  # Number of bins per octave
 
         # STFT parameters
-        self.n_fft = 2048       # Length of the FFT window
-        self.hop_length = 512   # Number of samples between successive frames
+        self.n_fft = 2048  # Length of the FFT window
+        self.hop_length = 512  # Number of samples between successive frames
 
         # save file path
         self.save_path = "data/spec_repr/" + self.preproc_mode + "/"
@@ -52,10 +52,11 @@ class TabDataReprGen:
         Constructs, cleans, and categorizes labels and stores them in output dict
         Returns the number of frames
         """
-        file_audio = self.path_audio + filename + "_mic.wav"    # wav file
-        file_anno = self.path_anno + filename + ".jams"         # jams file
-        jam = jams.load(file_anno)                              # loads jams file
-        self.sr_original, data = wavfile.read(file_audio)       # creates sample rate [int] and data from wav file
+        file_audio = self.path_audio + filename + "_mic.wav"  # wav file
+        file_anno = self.path_anno + filename + ".jams"  # jams file
+        jam = jams.load(file_anno)  # loads jams file
+        self.sr_original, data = wavfile.read(
+            file_audio)  # creates sample rate [int] and data from wav file
         self.sr_curr = self.sr_original
 
         # preprocess audio, store in output dict
@@ -64,11 +65,12 @@ class TabDataReprGen:
 
         # construct labels
         frame_indices = range(len(self.output["repr"]))  # Counts the frames
-        times = librosa.frames_to_time( # Converts frame counts to time (seconds)
+        times = librosa.frames_to_time(  # Converts frame counts to time (seconds)
             frame_indices,
-            sr=self.sr_curr,            # Sample rate
-            hop_length=self.hop_length  # Number of samples between successive frames
-            )
+            sr=self.sr_curr,  # Sample rate
+            hop_length=self.
+            hop_length  # Number of samples between successive frames
+        )
 
         # loop over all strings and sample annotations
         labels = []
@@ -85,17 +87,19 @@ class TabDataReprGen:
                         self.string_midi_pitches[string_num])
             labels.append([string_label_samples])
 
-        labels = np.array(labels)       # Creates np.array out of labels list
+        labels = np.array(labels)  # Creates np.array out of labels list
         # remove the extra dimension
         labels = np.squeeze(labels)
         labels = np.swapaxes(labels, 0, 1)
 
         # clean labels
-        labels = self.clean_labels(labels) # Returns an array of the labels with
+        labels = self.clean_labels(
+            labels)  # Returns an array of the labels with
         # the correct string numbering and categorized according to the number of classes defined
 
         # store and return
-        self.output["labels"] = labels # Stores the cleaned labels in output dict
+        self.output[
+            "labels"] = labels  # Stores the cleaned labels in output dict
         return len(labels)
 
     def correct_numbering(self, n):
@@ -148,11 +152,12 @@ class TabDataReprGen:
             self.sr_curr = self.sr_downs
         if self.preproc_mode == "c":
             data = np.abs(
-                librosa.cqt(data,     # Computes the constant-Q transform of an audio signal
-                            hop_length=self.hop_length,
-                            sr=self.sr_curr,        # data sample rate
-                            n_bins=self.cqt_n_bins,
-                            bins_per_octave=self.cqt_bins_per_octave))
+                librosa.cqt(
+                    data,  # Computes the constant-Q transform of an audio signal
+                    hop_length=self.hop_length,
+                    sr=self.sr_curr,  # data sample rate
+                    n_bins=self.cqt_n_bins,
+                    bins_per_octave=self.cqt_bins_per_octave))
         elif self.preproc_mode == "m":
             data = librosa.feature.melspectrogram(y=data,
                                                   sr=self.sr_curr,
@@ -204,14 +209,18 @@ class TabDataReprGen:
         Saves the file as an npz
         """
 
-        filename = self.get_nth_filename(n)     # Gets only filename with no .jams extension
+        filename = self.get_nth_filename(
+            n)  # Gets only filename with no .jams extension
         print(filename)
         num_frames = self.load_rep_and_labels_from_raw_file(filename)
         print("done: " + filename + ", " + str(num_frames) + " frames")
         save_path = self.save_path
-        if not os.path.exists(save_path):               # Creates saving path if it does not exist
+        if not os.path.exists(
+                save_path):  # Creates saving path if it does not exist
             os.makedirs(save_path)
-        self.save_data(save_path + filename + ".npz")   # Saves generated output dictionary in an npz file
+        self.save_data(
+            save_path + filename +
+            ".npz")  # Saves generated output dictionary in an npz file
 
     def load_rep_from_raw_file(self, filename):
         """Function to generate x_new data from a wave file
@@ -222,6 +231,18 @@ class TabDataReprGen:
                 [numpy.ndArray]: a numpy array of shape
                 num frames x 192 x 9 (con_win) x 1
             """
+        # client = storage.Client().bucket(bucket)
+        # print(type(client))
+        # print(f"Client exists {client.exists()}")
+        # print(client)
+        # # storage_location = 'models/{}/versions/{}/{}'.format(
+        # #     MODEL_NAME, model_directory, 'model.joblib')
+        # storage_location = 'models/{}/{}'.format(MODEL_NAME, 'model.joblib')
+        # print(storage_location)
+        # blob = client.blob(storage_location)
+        # print(blob.exists())
+        # blob.download_to_filename('model.joblib')
+
         self.con_win_size = 9
         self.half_win = self.con_win_size // 2
         file_audio = filename
@@ -245,6 +266,7 @@ class TabDataReprGen:
         x_new = np.array(x_new, dtype='float32')
         return x_new
 
+
 def main(args):
     """
     Gets the index of the file (m) and the preprocessing mode (n)
@@ -259,4 +281,4 @@ def main(args):
 if __name__ == "__main__":
     #for index in range(361):
     #    main([index, 'c'])
-    main([0,"c"])
+    main([0, "c"])
