@@ -52,6 +52,14 @@ processed_file = None
 mode = st.radio('Choose Mode of Tab production:', ('Ergonomic Simple', 'Ergonomic Rhythm', 'All Frames'))
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 
+###########################################################
+# slider for number of divisions 
+
+num_div = st.slider('Select number of frets per line', 1, 10, 3)
+# web_tabs(tabs, num_div=4, len_div=16)
+
+###########################################################
+
 model = tp.load_model_and_weights()
 model.load_weights('./h5-model/full_val0_75acc_weights.h5')
 genrep = TabDataReprGen()
