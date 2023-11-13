@@ -29,9 +29,11 @@
 # Data analysis
 
 - Document here the project: autotab
-- Description: Project Description
-- Data Source:
-- Type of analysis:
+- Description: This Project focuses on creating a CNN-Model to predict guitar tabluature based on a .wave input file.
+So far the model only detects a single instrument.
+- Data Source: Data from Audio Research Lab, along the Center for Digital Music at Queen Mary University.
+GuitarSet, a dataset that provides high quality guitar recordings alongside rich annotations and metadata. https://guitarset.weebly.com/
+- Type of analysis: Training a model based on the Data and trying to predict an accurate tabluatur. 
 
 Please document the project the better you can.
 
